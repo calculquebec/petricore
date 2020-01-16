@@ -1,0 +1,15 @@
+#!/bin/bash
+rm -rf "/localscratch/$SLURM_JOB_USER.$SLURM_JOBID.0"
+rm -rf "/dev/shm/$SLURM_JOB_USER.$SLURM_JOBID.0"
+rm -rf "/tmp/$SLURM_JOB_USER.$SLURM_JOBID.0"
+
+#Clears the job cgroup in case of cancel
+cgdelete -r cpuacct:/slurm/uid_$SLURM_JOB_UID/job_$SLURM_JOBID
+cgdelete -r memory:/slurm/uid_$SLURM_JOB_UID/job_$SLURM_JOBID
+
+#Clears the uid cgroup in case it is empty after the scancel. If not empty, then the active cgroups should remain intact.
+cgdelete  cpuacct:/slurm/uid_$SLURM_JOB_UID
+cgdelete  memory:/slurm/uid_$SLURM_JOB_UID
+
+
+exit 0

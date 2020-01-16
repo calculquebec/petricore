@@ -1,0 +1,14 @@
+[Unit]
+Description=Web application to implement logic for petriCORE
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/var/www/logic_webapp/bin/python3 /var/www/logic_webapp/logic_webapp.py
+Restart=always
+RestartSec=3
+StartLimitBurst=5
+StartLimitIntervalSec=10
+
+[Install]
+WantedBy=multi-user.target
