@@ -10,7 +10,7 @@ Monitoring tool for CC Clusters
 
 #### System
 - libcgroup-tools
-
+- Prometheus pushgateway up and running
 ## webapp
 ### Dependencies
 #### Python
