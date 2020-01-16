@@ -25,7 +25,6 @@ from prometheus_client import (
 import signal
 import sys
 import psutil
-import collections
 
 # Global Constants
 HOST = socket.gethostname().split(".")[0]  # Get node name
