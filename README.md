@@ -21,6 +21,7 @@ Monitoring tool for CC Clusters
 - pymysql
 
 #### System
+- mysql-devel
 - texlive
 - texlive-lastpage
 
