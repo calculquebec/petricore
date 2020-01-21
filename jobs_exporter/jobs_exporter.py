@@ -8,6 +8,11 @@
 #
 #############################################
 
+
+"""Foobar.py: Slurm jobs exporter daemon (but can be modified to work with other schedulers I'm sure...) for Prometheus"""
+
+__author__ = "Alexandre Larouche#"
+
 import os
 import fnmatch
 import re
