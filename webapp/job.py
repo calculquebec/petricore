@@ -12,8 +12,8 @@ import db_access
 CWD = "/var/www/logic_webapp/"
 PROM_HOST = "http://mgmt1.int." + db_access.get_domain_name() + ":9090"
 API_URL = PROM_HOST + "/api/v1/query"
-LOCALHOST = gethostname().split(".")[0] #charlie, sigma, ... [name].calculquebec.cloud
-# LOCALHOST = LOCALHOST.split(".")[0] 
+LOCALHOST = gethostname().split(".")[0]  # charlie, sigma, ... [name].calculquebec.cloud
+# LOCALHOST = LOCALHOST.split(".")[0]
 SACCT = "/opt/software/slurm/bin/sacct"
 FORMAT = "--format=Account,User,Start,End,AllocCPUs,AllocTres,NodeList,Elapsed"
 
@@ -260,7 +260,9 @@ class Job:
         ) / self.__opened_files  # 1048576 if to change bytes into MB
 
         # To add the URL to the pdf right before the last line (which is WARNING=boolean)
-        PDF_URL = PROM_HOST + "/logic/pdf/" + str(self.__jobid)
+        PDF_URL = (
+            "petricore." + LOCALHOST + ".calculquebec.cloud/pdf/" + str(self.__jobid)
+        )
 
         self.__out_string = self.__out_string + "----------I/O Data----------\n"
         # IF not using Scratch
