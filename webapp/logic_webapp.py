@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from flask import Flask, send_file
+from flask import Flask, send_file, redirect, url_for
 import os
 from job import Job
 from user import User
@@ -36,12 +36,14 @@ def index():
 @app.route("/mail/<jobid>")
 def job_info(jobid):
     job = Job(jobid)
-    # try:
-    job.fill_out_string()
-    # except Exception as e:
-    # print(str(e))
-    # print("This is normal if the job was cancelled, it pulls an empty json")
-    # pass
+    try:
+        job.fill_out_string()
+    except Exception as e:
+        print(str(e))
+        print("This is normal if the job was cancelled, it pulls an empty json")
+        print(str(e))
+        return redirect(url_for("index"))
+        # pass
     job.expose_json()
     return job.get_out_string()
 
@@ -57,12 +59,15 @@ def job_plot(jobid, metric):
             job.make_plot(metric, filename, dirname)
         except Exception as e:
             print(str(e))
-            pass
+            return redirect(
+                url_for("index")
+            )  # Avant on avait un pass ici au lieu d'un return...
 
     try:
         return send_file(dirname + filename, attachment_filename=str(jobid) + filename)
     except Exception as e:
-        return str(e)
+        print(str(e))
+        return redirect(url_for("index"))
 
 
 @app.route("/pie/<jobid>/")
@@ -82,12 +87,13 @@ def job_pie(jobid):
             job.make_pie(metrics, filename, dirname)
         except Exception as e:
             print(str(e))
-            pass
+            return redirect(url_for("index"))
 
     try:
         return send_file(dirname + filename, attachment_filename=filename)
     except Exception as e:
-        return str(e)
+        print(str(e))
+        return redirect(url_for("index"))
 
 
 @app.route("/pdf/<jobid>")
@@ -100,12 +106,13 @@ def job_pdf(jobid):
             job.make_pdf(jobid, filename, dirname)
         except Exception as e:
             print(str(e))
-            pass
+            return redirect(url_for("index"))
 
     try:
         return send_file(dirname + filename, attachment_filename=filename)
     except Exception as e:
-        return str(e)
+        print(str(e))
+        return redirect(url_for("index"))
 
 
 @app.route("/api/v1/jobs/<jobid>/usage")
