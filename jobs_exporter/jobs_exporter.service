@@ -9,7 +9,6 @@ ExecStart=/opt/jobs_exporter/bin/python3 /usr/sbin/jobs_exporter
 Restart=always
 RestartSec=3
 StartLimitBurst=5
-StartLimitIntervalSec=10
 
 [Install]
 WantedBy=multi-user.target
