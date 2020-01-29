@@ -635,7 +635,7 @@ class Job:
     def expose_json(self):
         """Expose data in a json format in order to make a SOURCE OF TRUTH (API)"""
         data = {}
-        data["jobid"] = self.__jobid
+        data["jobid"] = int(self.__jobid)
         data["sponsor"] = self.__sponsor
         data["username"] = self.__username
         data["runtime"] = self.__runtime
