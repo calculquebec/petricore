@@ -682,7 +682,10 @@ class Job:
             "usage": sum(self.__max_rss) / int(self.__alloc_mem[:-1]),
         }
 
-        data["ram"]["available"] = {"amount": self.__alloc_mem[:-1], "unit": "MB"}
+        data["ram"]["available"] = {
+            "amount": float(self.__alloc_mem[:-1]),
+            "unit": "MB",
+        }
 
         data["io"] = {}
         data["io"]["opened_files"] = self.__opened_files
