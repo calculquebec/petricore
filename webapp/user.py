@@ -30,9 +30,8 @@ class User:
         """Get the self.__storage_info attribute"""
         return self.__storage_info
 
-
     def get_jobs(self):
-          return self.__jobs
+        return self.__jobs
 
     def retrieve_storage_info(self):
         """Function that retrieves storage data for the user, queries lfs quota on the cluster 
@@ -89,3 +88,10 @@ class User:
                 [element[0] for element in result]
             )  # Convert the tuple of single element tuples to a list of elements
         return self.__jobs
+
+    def get_info(self):
+        output = {}
+        output["storage"] = self.__storage_info
+        output["jobs"] = self.__jobs
+        return output
+

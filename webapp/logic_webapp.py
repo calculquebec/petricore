@@ -124,7 +124,7 @@ def job_truth(jobid):
 @app.route("/api/v1/users/<username>")
 def user_truth(username):
     user = User(username)
-    return user.get_storage_info()
+    return user.get_info()
 
 
 if __name__ == "__main__":
