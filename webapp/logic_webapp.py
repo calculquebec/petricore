@@ -41,7 +41,6 @@ def job_info(jobid):
     except Exception as e:
         print(str(e))
         print("This is normal if the job was cancelled, it pulls an empty json")
-        print(str(e))
         return redirect(url_for("index"))
         # pass
     job.expose_json()
