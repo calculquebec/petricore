@@ -94,4 +94,3 @@ class User:
         output["storage"] = self.__storage_info
         output["jobs"] = self.__jobs
         return output
-
