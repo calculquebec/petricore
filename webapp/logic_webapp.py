@@ -73,7 +73,6 @@ def job_plot(jobid, metric):
 def job_pie(jobid):
     job = Job(jobid)
     metrics = ("jobs_system_time", "jobs_user_time")
-    # metrics = ("jobs_cpu_time_core",)
     filename = str(jobid)
     dirname = CWD + "pies/" + str(jobid) + "/"
 
