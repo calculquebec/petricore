@@ -1,7 +1,5 @@
 import pymysql.cursors
-
-# SLURM_DB_HOST_IP = "192.168.159.15"
-
+import ldap
 
 def get_domain_name():
     """Returns the domain name of the current configuration from a config file"""
@@ -11,22 +9,24 @@ def get_domain_name():
         return domain
 
 
-SLURM_DB_HOST = "mgmt1.int." + get_domain_name()
-SLURM_DB_HOST = SLURM_DB_HOST.rstrip()
-
-
-def create_db_connection():
+def create_slurm_db_connection(host, port, user, password, db):
     """Creates the connection to the database (MySQL) so we can query it"""
     # password = ""
     # with open(".password") as file:
     #     password = file.readline
 
     connection = pymysql.connect(
-        host=SLURM_DB_HOST,
-        port=3306,
-        user="petricore",
-        password="yourPassword",  # TODO Change to an obfuscated file or something
-        db="slurm_acct_db",
+        host=host,
+        port=port,
+        user=user,
+        password=password,  # TODO Change to an obfuscated file or something
+        db=db
     )
-    print("[+] DB connection is up! [+]")
+    print("[+] Slurm accounting DB connection is up! [+]")
     return connection
+
+def create_ldap_connection(host):
+    connect = ldap.initialize(host)
+    connect.set_option(ldap.OPT_REFERRALS, 0)
+    connect.simple_bind_s()
+    return connect
