@@ -16,10 +16,11 @@ SLURM_DB_PASS = "yourPassword"
 SLURM_DB_HOST = SLURM_DB_HOST.rstrip()
 SLURM_DB_PORT = 3306
 SLURM_ACCT_DB = "slurm_acct_db"
+LDAP_HOST = "ldap://mgmt1"
 
-# Create the database connection
+# Create the connections to Slurm's acct db and LDAP
 SLURM_DB_CONNECTION = external_access.create_slurm_db_connection(SLURM_DB_HOST, SLURM_DB_PORT, SLURM_DB_USER, SLURM_DB_PASS, SLURM_ACCT_DB)
-LDAP_CONNECTION = external_access.create_ldap_connection(SLURM_DB_HOST)
+LDAP_CONNECTION = external_access.create_ldap_connection(LDAP_HOST)
 
 class User:
     def __init__(self, username):
