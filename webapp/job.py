@@ -7,10 +7,10 @@ import matplotlib.pyplot as plt
 from pylatex import Document, Section, Figure, NoEscape, NewPage, Command
 from user import User
 from socket import gethostname
-import db_access
+import external_access
 
 CWD = "/var/www/logic_webapp/"
-PROM_HOST = "http://mgmt1.int." + db_access.get_domain_name() + ":9090"
+PROM_HOST = "http://mgmt1.int." + external_access.get_domain_name() + ":9090"
 API_URL = PROM_HOST + "/api/v1/query"
 LOCALHOST = gethostname().split(".")[0]  # charlie, sigma, ... [name].calculquebec.cloud
 # LOCALHOST = LOCALHOST.split(".")[0]
