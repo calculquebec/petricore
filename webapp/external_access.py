@@ -1,12 +1,22 @@
 import pymysql.cursors
 import ldap
 
+
 def get_domain_name():
     """Returns the domain name of the current configuration from a config file"""
     with open("/var/www/logic_webapp/webapp_config") as file:
         line = file.readline()
         domain = line.split("=")[1].rstrip()  # Take right hand side of = and remove \n
         return domain
+
+
+def get_db_password():
+    with open("/var/www/logic_webapp/webapp_config") as file:
+        line = file.readlines()[1]
+        password = line.split("=")[
+            1
+        ].rstrip()  # Take right hand side of = and remove \n
+        return password
 
 
 def create_slurm_db_connection(host, port, user, password, db):
@@ -20,10 +30,11 @@ def create_slurm_db_connection(host, port, user, password, db):
         port=port,
         user=user,
         password=password,  # TODO Change to an obfuscated file or something
-        db=db
+        db=db,
     )
     print("[+] Slurm accounting DB connection is up! [+]")
     return connection
+
 
 def create_ldap_connection(host):
     connect = ldap.initialize(host)
