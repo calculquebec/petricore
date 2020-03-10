@@ -196,6 +196,6 @@ class User:
         output["jobs"] = self.__jobs
         output["projects"] = self.__projects_dict
         output["project_usages"] = self.__usage_dict
-        output["file_usage"] = self.__files
+        output["file_usages"] = self.__files
         return output
 
