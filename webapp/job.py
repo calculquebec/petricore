@@ -67,10 +67,14 @@ class Job:
         # self.__user = User(username)
 
     def get_num_used_cpus(self, treshold):
-        """Gets the number of cpus effectively used by the job by measuring cpu time for each\n
-        Args:
-        - self
-        - treshold: lowest acceptable percentage of cpu time used in percentage
+        """
+        Gets the number of cpus effectively used by the job by measuring cpu time for each and places this number in self.__count_used_cpus
+
+        Parameters
+        ----------
+        treshold : number
+            lowest acceptable percentage of cpu time used in percentage
+        
         """
         # Time shares
         max_time_per_core = self.__cpu_time_total / self.__alloc_cpu
@@ -83,6 +87,7 @@ class Job:
     def get_sacct_data(self):
         """
         Parses the output of sacct for the job and fills the associated object attributes
+
         """
         out = subprocess.check_output(
             [SACCT, "--units=M", "-X", "-n", "-p", FORMAT, "-j", str(self.__jobid)]
@@ -414,11 +419,18 @@ class Job:
 
     def make_plot(self, metric, filename, dirname, forpdf=False):
         """
-        Makes a plot with a given metric\n
-        Args:
-        - self
-        - metric: string, metric wanted to make plot
-        - forpdf: boolean, which tells the function if the calling function was make_pdf()
+        Makes a plot with a given metric
+        
+        Parameters
+        ----------
+        metric: string
+            metric wanted to make plot
+        filename : string
+            given file name to save the figure
+        dirname : string
+            given directory name in which to save the file
+        forpdf: boolean
+            tells the function if the calling function was make_pdf()
         """
         # Constants
         plt.figure()
@@ -487,10 +499,6 @@ class Job:
                 y=80 * (self.__alloc_cpu / len(json)), linestyle="dashed", color="black"
             )
 
-        # If the file already exists in order to save the newer plot. CHANGE it to create plot only if doesn't exist ???
-        # if os.path.isfile(filename):
-        # os.remove(filename)
-
         # Function to save the plot
         plt.savefig(dirname + filename)
 
@@ -501,11 +509,18 @@ class Job:
 
     def make_pie(self, metrics, filename, dirname, forpdf=False):
         """
-        Makes a pie chart for a list/tuple of metrics\n
-        Args:
-        - self
-        - metrics: list/tuple of metrics needed for pie chart
-        - forpdf: boolean which tells the function if the calling function was make_pdf()
+        Makes a pie chart for a list/tuple of metrics
+
+        Parameters
+        ----------
+        metrics : list/tuple
+            metrics needed for pie chart
+        filename : string
+            given file name to save the figure
+        dirname : string
+            given directory name in which to save the file
+        forpdf : boolean
+            which tells the function if the calling function was make_pdf()
         """
         # Constants
         URL = PROM_HOST + "/api/v1/query"
@@ -570,10 +585,15 @@ class Job:
     def make_pdf(self, jobid, filename, dirname):
         """
         Makes a PDF for a given job id. It retrieves data from Prometheus HTTP API and calls make_plot() as well as make_pie() in order to make the graphs
-        and display resource usage to users.\n
-        Args:
-        - self
-        - jobid: integer, Slurm job's ID
+        and display resource usage to users.
+        Parameters
+        ----------
+        jobid : integer,
+            Slurm job's ID
+        filename : string
+            File name to save the figure
+        dirname : string
+            directory name to save the file
         """
         geometry_options = {"right": "2cm", "left": "2cm"}
         fname = CWD + "pdf/" + str(jobid) + "_summary"
@@ -633,7 +653,14 @@ class Job:
         doc.generate_pdf(clean_tex=False)
 
     def expose_json(self):
-        """Expose data in a json format in order to make a SOURCE OF TRUTH (API)"""
+        """
+        Expose data in a json format in order to make a SOURCE OF TRUTH (API)
+        
+        Returns
+        -------
+        JSON-like dictionnary
+            Contains the source of truth
+        """
         data = {}
         data["jobid"] = int(self.__jobid)
         data["sponsor"] = self.__sponsor
