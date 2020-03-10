@@ -8,8 +8,6 @@ import os
 import ldap
 
 # GLOBAL constants
-# LOCALHOST = gethostname()
-# LOCALHOST = LOCALHOST.split(".")[0]
 SLURM_DB_HOST = "mgmt1.int." + external_access.get_domain_name()
 SLURM_DB_USER = "petricore"
 SLURM_DB_PASS = "yourPassword"
