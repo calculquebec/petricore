@@ -39,10 +39,7 @@ def job_info(jobid):
     try:
         job.fill_out_string()
     except Exception as e:
-        print(str(e))
-        print("This is normal if the job was cancelled, it pulls an empty json")
-        return redirect(url_for("index"))
-        # pass
+        return {"error": e}, 404
     job.expose_json()
     return job.get_out_string()
 
@@ -57,16 +54,12 @@ def job_plot(jobid, metric):
         try:
             job.make_plot(metric, filename, dirname)
         except Exception as e:
-            print(str(e))
-            return redirect(
-                url_for("index")
-            )  # Avant on avait un pass ici au lieu d'un return...
+            return {"error": e}, 404
 
     try:
         return send_file(dirname + filename, attachment_filename=str(jobid) + filename)
     except Exception as e:
-        print(str(e))
-        return redirect(url_for("index"))
+        return {"error": e}, 404
 
 
 @app.route("/pie/<jobid>/")
@@ -84,14 +77,12 @@ def job_pie(jobid):
         try:
             job.make_pie(metrics, filename, dirname)
         except Exception as e:
-            print(str(e))
-            return redirect(url_for("index"))
+            return {"error": e}, 404
 
     try:
         return send_file(dirname + filename, attachment_filename=filename)
     except Exception as e:
-        print(str(e))
-        return redirect(url_for("index"))
+        return {"error": e}, 404
 
 
 @app.route("/pdf/<jobid>")
@@ -103,26 +94,30 @@ def job_pdf(jobid):
         try:
             job.make_pdf(jobid, filename, dirname)
         except Exception as e:
-            print(str(e))
-            return redirect(url_for("index"))
+            return {"error": e}, 404
 
     try:
         return send_file(dirname + filename, attachment_filename=filename)
     except Exception as e:
-        print(str(e))
-        return redirect(url_for("index"))
+        return {"error": e}, 404
 
 
 @app.route("/api/v1/jobs/<jobid>/usage")
 def job_truth(jobid):
-    job = Job(jobid)
-    return job.expose_json()
+    try:
+        job = Job(jobid)
+        return job.expose_json()
+    except Exception as e:
+        return {"error": str(e)}, 404
 
 
 @app.route("/api/v1/users/<username>")
 def user_truth(username):
-    user = User(username)
-    return user.get_info()
+    try:
+        user = User(username)
+        return user.get_info()
+    except Exception as e:
+        return {"error": str(e)}, 404
 
 
 if __name__ == "__main__":
