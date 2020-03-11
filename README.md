@@ -1,4 +1,5 @@
-# jobs_exporter
+# Petricore
+## jobs_exporter
 A Slurm cgroups and /proc (X-referenced) data exporter for Prometheus that should be easily adaptable to other schedulers.
 
 ## What does it export ?
