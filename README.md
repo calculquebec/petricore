@@ -1,6 +1,6 @@
 # Petricore
 ## jobs_exporter
-A Slurm cgroups and /proc (X-referenced) data exporter for Prometheus that should be easily adaptable to other schedulers.
+A Slurm jobs metrics (using cgroups and /proc via cross-reference) data exporter for Prometheus that should be easily adaptable to other schedulers.
 
 ## What does it export ?
 - CPU Usage (%) of job (jobs_cpu_percent)
@@ -68,9 +68,9 @@ in order to not leave any trailing cgroups on unsuccessful jobs (CANCEL, TIMEOUT
 
 jobs_exporter runs as a daemon in the background on the compute nodes and expose metrics to the Prometheus pushgateway exposed on every node in order to be scraped by Prometheus.
 
-All you have to do in order for this daemon to work as expected is configure Prometheus to scrape the node you are running the daemon (On Magic_Castle, this is handled via Consul's autodiscovery feature) and everything should work!
+All you have to do in order for this daemon to work as expected is to have a Prometheus pushgateway on the node getting scraped and configure Prometheus to scrape the pushgateway on the node on which you are running the daemon (On Magic_Castle, this is handled via Consul's autodiscovery feature) and everything should work!
 
-### webapp
+### Web App
 ![alt text](https://docs.google.com/drawings/d/e/2PACX-1vRgZzeBaogtesA9l_xBIsGIpIaiCBhWDK-T8EDSs72Kp9HEpKcYPwR01ENmOnSGvugmN_4_DQ9Fdo5S/pub?w=1315&h=704 "Web app Diagram")
 
 The web app uses the Prometheus REST API in order to retrieve data from the database. It also parses the output of `sacct` locally in order to retrieve additionnal data to show the users. It proceeds to compute and verify if there were some problematic behaviors associated with the job and outputs those warnings (if there are any) in the email (for now, future work may involve more ways of exposing data to the user).
