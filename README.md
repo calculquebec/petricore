@@ -13,13 +13,13 @@ A Slurm jobs metrics (using cgroups and /proc via cross-reference) data exporter
 - Amount of time spent in system mode (jobs_system_time)
 - Amount of cpu time spent in total (jobs_cpu_time_total)
 - Amount of cpu time spent per cpu (jobs_cpu_time_core)
-- If the job used the scratch fs. (jobs_uses_scratch)
+- If the job used the scratch filesystem. (jobs_uses_scratch)
 - Amount of megabytes read (jobs_read_mb)
 - Amount of megabytes written (jobs_write_mb)
 - Write count (jobs_write_count)
 - Read count (jobs_read_count)
 
-Every class of exported data stars with the prefix `jobs_` to be easily recognizable as part of this exporter.
+Every class of exported data starts with the prefix `jobs_` to be easily recognizable as part of this exporter.
 
 ## Requirements
 
@@ -45,8 +45,8 @@ Every class of exported data stars with the prefix `jobs_` to be easily recogniz
 
 #### System
 - mysql-devel
-- texlive
-- texlive-lastpage
+- texlive (for metrics pdf, might be deleted in the future)
+- texlive-lastpage (for metrics pdf, might be deleted in the future)
 
 If it is your first time using cgroups with Slurm, you might want to consider adding these lines to the epilog : 
 
