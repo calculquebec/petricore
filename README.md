@@ -75,7 +75,7 @@ All you have to do in order for this daemon to work as expected is to have a Pro
 
 The web app uses the Prometheus REST API in order to retrieve data from the database. It also parses the output of `sacct` locally in order to retrieve additionnal data to show the users. It proceeds to compute and verify if there were some problematic behaviors associated with the job and outputs those warnings (if there are any) in the email (for now, future work may involve more ways of exposing data to the user).
 
-It has multiple endpoints - 
+It has multiple endpoints, all accessible via HTTP GET - 
 - `/api/v1/users/<username>` : Source of truth for a user
 - `/api/v1/jobs/<jobid>/usage` : Source of truth for a job
 - `/pdf/<jobid>` : Makes a pdf with various plots and pie charts to visualize the usage of ressources
