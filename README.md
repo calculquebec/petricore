@@ -76,13 +76,13 @@ All you have to do in order for this daemon to work as expected is to have a Pro
 The web app uses the Prometheus REST API in order to retrieve data from the database. It also parses the output of `sacct` locally in order to retrieve additionnal data to show the users. It proceeds to compute and verify if there were some problematic behaviors associated with the job and outputs those warnings (if there are any) in the email (for now, future work may involve more ways of exposing data to the user).
 
 It has multiple endpoints - 
-`/api/v1/users/<username>` : Source of truth for a user
-`/api/v1/jobs/<jobid>/usage` : Source of truth for a job
-`/pdf/<jobid>` : Makes a pdf with various plots and pie charts to visualize the usage of ressources
-`/pie/<jobid>/` : Makes pie charts for a jobid on metrics {"jobs_system_time", "jobs_user_time"} (one pie, 2 components)
-`/plot/<jobid>/<metric>` : Makes a plot for a given job and metric
-`/mail/<jobid>` : Retrieves the content of the email that would be sent to a user after the job is completed
-`/` : Shows examples of paths that can be used and their purpose. (Hostname is not up-to-date)
+- `/api/v1/users/<username>` : Source of truth for a user
+- `/api/v1/jobs/<jobid>/usage` : Source of truth for a job
+- `/pdf/<jobid>` : Makes a pdf with various plots and pie charts to visualize the usage of ressources
+- `/pie/<jobid>/` : Makes pie charts for a jobid on metrics {"jobs_system_time", "jobs_user_time"} (one pie, 2 components)
+- `/plot/<jobid>/<metric>` : Makes a plot for a given job and metric
+- `/mail/<jobid>` : Retrieves the content of the email that would be sent to a user after the job is completed
+- `/` : Shows examples of paths that can be used and their purpose. (Hostname is not up-to-date)
 
 The web app also connects to Slurm's accounting database in order to retrieve a mapping of users and jobs (user:[jobs]).
 
