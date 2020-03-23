@@ -17,6 +17,15 @@ def get_domain_name():
         return domain
 
 
+def get_db_password():
+    with open("/var/www/logic_webapp/webapp_config") as file:
+        line = file.readlines()[1]
+        password = line.split("=")[
+            1
+        ].rstrip()  # Take right hand side of = and remove \n
+        return password
+
+
 def create_slurm_db_connection(host, port, user, password, db):
     """
     Creates the connection to the database (MySQL) so it can be queried
@@ -37,10 +46,9 @@ def create_slurm_db_connection(host, port, user, password, db):
     Returns
     -------
     PyMySQL Connection object
-
     """
 
-    connection = pymysql.connection(
+    connection = pymysql.connect(
         host=host, port=port, user=user, password=password, db=db,
     )
     print("[+] Slurm accounting DB connection is up! [+]")

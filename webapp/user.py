@@ -10,7 +10,7 @@ import ldap
 # GLOBAL constants
 SLURM_DB_HOST = "mgmt1.int." + external_access.get_domain_name()
 SLURM_DB_USER = "petricore"
-SLURM_DB_PASS = "yourPassword"
+SLURM_DB_PASS = external_access.get_db_password()
 SLURM_DB_HOST = SLURM_DB_HOST.rstrip()
 SLURM_DB_PORT = 3306
 SLURM_ACCT_DB = "slurm_acct_db"
