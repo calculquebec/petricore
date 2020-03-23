@@ -4,6 +4,7 @@ from flask import Flask, send_file, redirect, url_for
 import os
 from job import Job
 from user import User
+from subprocess import CalledProcessError
 
 CWD = "/var/www/logic_webapp/"
 
@@ -106,18 +107,27 @@ def job_pdf(jobid):
 def job_truth(jobid):
     try:
         job = Job(jobid)
-        return job.expose_json()
+        retval = job.expose_json()
+    except IndexError:
+        retval = {"error": "Job " + jobid + " does not exist"}, 404
+    except CalledProcessError:
+        retval = {"error": "Job " + jobid + " is not finished"}, 404
     except Exception as e:
-        return {"error": str(e)}, 404
+        retval = {"error": str(e)}
+
+    return retval
 
 
 @app.route("/api/v1/users/<username>")
 def user_truth(username):
     try:
         user = User(username)
-        return user.get_info()
+        retval = user.get_info()
+    except KeyError:
+        retval = {"error": "User " + username + " does not exist"}, 404
     except Exception as e:
-        return {"error": str(e)}, 404
+        retval = {"error": str(e)}
+    return retval
 
 
 if __name__ == "__main__":

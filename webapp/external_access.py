@@ -48,7 +48,7 @@ def create_slurm_db_connection(host, port, user, password, db):
     PyMySQL Connection object
     """
 
-    connection = pymysql.connection(
+    connection = pymysql.connect(
         host=host, port=port, user=user, password=password, db=db,
     )
     print("[+] Slurm accounting DB connection is up! [+]")

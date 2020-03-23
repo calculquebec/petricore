@@ -2,7 +2,7 @@
 
 """jobs_exporter.py: Scheduler jobs exporter daemon (for slurm, but can be modified to work with other schedulers I'm sure...) for Prometheus"""
 
-__author__      = "Alexandre Larouche"
+__author__ = "Alexandre Larouche"
 
 import os
 import fnmatch
@@ -125,7 +125,7 @@ job_proc_name_map_current = {}
 # For comparing if a process in a job has terminated and therefore needs to be removed from the collectors.
 job_proc_name_map_last = {}
 
-
+# Handles SIGINT
 def sigint_handler(sig, frame):
     delete_from_gateway("localhost:9091", job="jobs_exporter")
     sys.exit(0)
@@ -135,17 +135,31 @@ signal.signal(signal.SIGINT, sigint_handler)
 
 
 def load_blacklist(filename):
+    """
+    Loads a user list that the program cannot scrape during its process
+    
+    Parameters
+    ----------
+    filename : string
+        name of the file containing the blacklist
+    
+    """
     global BLACKLIST
     with open(filename) as blacklist:
         BLACKLIST = blacklist.read().split("\n")
 
 
 def remove_old_procs(cur_map, last_map, jobid):
-    """Remove a process which was there in the last iteration but isn't appearing in the newest iteration of the scraping
+    """Remove a PROCESS (not job) which was there in the last iteration but isn't appearing in the newest iteration of the scraping
 
-    -----params-----
-    cur_map: job -> proc mapping for the current iteration
-    last_map: job -> proc mapping for the last iteration (just before cur_map)
+    Parameters
+    ----------
+    cur_map : dictionnary
+        job -> proc mapping for the current iteration
+    last_map : dictionnary
+        job -> proc mapping for the last iteration (just before cur_map)
+    jobid : integer
+        id of the job that is being verified
     """
     for proc in last_map:
         if proc not in cur_map:
@@ -155,8 +169,10 @@ def remove_old_procs(cur_map, last_map, jobid):
 def remove_inactive_jobs_from_collectors(jobid):
     """Removes jobs that are done from the collectors so we don't keep pushing them
 
-    -----param-----
-    jobid: id of the job we want to delete from the collectors
+    Parameters
+    ----------
+    jobid: integer
+        id of the job we want to delete from the collectors
     """
     sp.remove(HOST, jobid)
     of.remove(HOST, jobid)
@@ -182,6 +198,18 @@ def remove_inactive_jobs_from_collectors(jobid):
 
 
 def get_proc_data(pids, numcpus, jobid):
+    """
+    Retrieves processes data for a given job id
+
+    Parameters
+    ----------
+    pids : array
+        list of process ids that needs checking for data
+    numcpus : integer
+        number of cpus allocated to the job
+    jobid : integer
+        id of the job that possesses the processes
+    """
     # Set jobs_uses_scratch to false here so in case no fildes links to scratch fs, it is already handled.
     us.labels(instance=HOST, slurm_job=jobid).set(0)
 
@@ -256,11 +284,17 @@ def retrieve_file_data(job, jobid, user, dirname):
     are found, retrieve the process data (cpu%, cputime, R/W counts,...) associated
     with said tasks.
 
-    ------params------
-    job: job name to find cgroup
-    jobid: jobid for collector labels
-    user: username to find the right cgroup
-    dirname: full name of the path to find tasks
+    Parameters
+    ----------
+    job: string 
+        job name to find cgroup
+    jobid: integer 
+        jobid for collector labels
+    user: string 
+        username to find the right cgroup
+    dirname: string 
+        full name of the path to find tasks
+
     """
     # Declarations
     tasks = []
@@ -334,10 +368,17 @@ def retrieve_file_data(job, jobid, user, dirname):
     if tasks:
         tasks = list(map(int, tasks))
         get_proc_data(tasks, len(cpus), jobid)
-    return cpus
 
 
 def retrieve_and_expose(timer):
+    """
+    Loop that retrieves and exposes the scraped data
+
+    Parameters
+    ----------
+    timer : integer
+        number of seconds to wait before next loop iteration
+    """
     # Prevents from sending delete to the pushgateway if no job was pushed two times in a row (i.e. all the jobs are done and accounted for for now)
     iter_empty = 0
     last_iter_found = []
@@ -405,10 +446,11 @@ if __name__ == "__main__":
     parser.add_argument(
         "-b",
         "--blacklist",
-        help="Set the path of the blacklist to load, by default, no blacklist is loaded",
+        help="Set the path (fully qualified name) of the blacklist to load, by default, no blacklist is loaded",
         type=str,
     )
     args = parser.parse_args()
+
     # Load blacklist
     if args.blacklist:
         print("[+] Loading blacklist" + args.blacklist + " [+]")
