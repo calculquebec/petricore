@@ -1,7 +1,7 @@
 #! /bin/bash
 #Must be run as root.
 newUser='petricore'
-newDbPassword=$(cat db_config)
+newDbPassword=$(cat /opt/petricore_db/db_config)
 
 host="$(hostname)" #Output of hostname command
 
