@@ -34,21 +34,7 @@ Every class of exported data starts with the prefix `jobs_` to be easily recogni
 - Use the jobacct_gather/cgroup plugin for Slurm (can be added in slurm.conf as JobAcctGatherType=jobacct_gather/cgroup)
 - Prometheus pushgateway up and running
 
-## webapp
-### Dependencies
-#### Python
-- flask
-- requests
-- pylatex
-- matplotlib
-- pymysql
-
-#### System
-- mysql-devel
-- texlive (for metrics pdf, might be deleted in the future)
-- texlive-lastpage (for metrics pdf, might be deleted in the future)
-
-If it is your first time using cgroups with Slurm, you might want to consider adding these lines to the epilog : 
+If it is your first time using cgroups with Slurm, you might want to consider adding these lines to the slurm epilog on the management node : 
 
 ```
 #Clears the job cgroup in case of cancel
@@ -59,8 +45,23 @@ cgdelete -r memory:/slurm/uid_$SLURM_JOB_UID/job_$SLURM_JOBID
 cgdelete  cpuacct:/slurm/uid_$SLURM_JOB_UID
 cgdelete  memory:/slurm/uid_$SLURM_JOB_UID
 ```
+These lines are used in order to not leave any trailing cgroups on unsuccessful jobs (CANCEL, TIMEOUT, ...)
 
-in order to not leave any trailing cgroups on unsuccessful jobs (CANCEL, TIMEOUT, ...)
+
+## webapp
+### Dependencies
+#### Python
+- flask
+- requests
+- pylatex
+- matplotlib
+- pymysql
+- python-ldap
+
+#### System
+- mysql-devel
+- texlive
+- texlive-lastpage
 
 ## How it works
 ### jobs_exporter
@@ -69,6 +70,28 @@ in order to not leave any trailing cgroups on unsuccessful jobs (CANCEL, TIMEOUT
 jobs_exporter runs as a daemon in the background on the compute nodes and expose metrics to the Prometheus pushgateway exposed on every node in order to be scraped by Prometheus.
 
 All you have to do in order for this daemon to work as expected is to have a Prometheus pushgateway on the node getting scraped and configure Prometheus to scrape the pushgateway on the node on which you are running the daemon (On Magic_Castle, this is handled via Consul's autodiscovery feature) and everything should work!
+
+### Cgroups data
+- Time spent in user mode
+- Time spent in system mode
+- Number of processes spawned
+- Amount of CPU time spent per core for one job
+- Amount of CPU time spent total for one job
+
+### psutil or /proc data
+- Number of threads
+- Number of opened files
+- Read count
+- Write count
+- Read amount (MB)
+- Write amount (MB)
+- RSS (Resident Set Size)
+- CPU usage per core on average
+- CPU usage total for the job (May be over 100% if multiple CPUs are used)
+- Job uses the Scratch filesystem
+
+As a reminder, even though the gathering of the data is split in two different areas, cgroups are still required since they contain a mapping for a job and its process IDs.
+
 
 ### Web App
 ![alt text](https://docs.google.com/drawings/d/e/2PACX-1vRgZzeBaogtesA9l_xBIsGIpIaiCBhWDK-T8EDSs72Kp9HEpKcYPwR01ENmOnSGvugmN_4_DQ9Fdo5S/pub?w=1315&h=704 "Web app Diagram")
