@@ -114,7 +114,7 @@ cpu_percent = Gauge(
 )
 cpu_percent_per_core = Gauge(
     "jobs_cpu_percent_per_core",
-    "CPU usage per core of job",
+    "CPU usage per core of job on average",
     ["instance", "slurm_job"],
     registry=REGISTRY,
 )
@@ -126,6 +126,8 @@ job_proc_name_map_current = {}
 job_proc_name_map_last = {}
 
 # Handles SIGINT
+
+
 def sigint_handler(sig, frame):
     delete_from_gateway("localhost:9091", job="jobs_exporter")
     sys.exit(0)
@@ -137,12 +139,12 @@ signal.signal(signal.SIGINT, sigint_handler)
 def load_blacklist(filename):
     """
     Loads a user list that the program cannot scrape during its process
-    
+
     Parameters
     ----------
     filename : string
         name of the file containing the blacklist
-    
+
     """
     global BLACKLIST
     with open(filename) as blacklist:
@@ -244,7 +246,8 @@ def get_proc_data(pids, numcpus, jobid):
             opened_files.update(p.open_files())
             threads = p.num_threads()
 
-            tc.labels(instance=HOST, slurm_job=jobid, proc_name=name).set(threads)
+            tc.labels(instance=HOST, slurm_job=jobid,
+                      proc_name=name).set(threads)
 
             # Looks for scratch usage in the opened files
             for file in opened_files:
@@ -268,14 +271,15 @@ def get_proc_data(pids, numcpus, jobid):
         )
     job_proc_name_map_last[jobid] = proc_names
 
-    # Expose data to Prometheus
+    # Put data in collectors
     of.labels(instance=HOST, slurm_job=jobid).set(len(set(opened_files)))
     read.labels(instance=HOST, slurm_job=jobid).set(read_mbytes)
     write.labels(instance=HOST, slurm_job=jobid).set(write_mbytes)
     read_count.labels(instance=HOST, slurm_job=jobid).set(read_cnt)
     write_count.labels(instance=HOST, slurm_job=jobid).set(write_cnt)
     rss.labels(instance=HOST, slurm_job=jobid).set(res_set_size)
-    cpu_percent_per_core.labels(instance=HOST, slurm_job=jobid).set(cpu_usage_per_core)
+    cpu_percent_per_core.labels(
+        instance=HOST, slurm_job=jobid).set(cpu_usage_per_core)
     cpu_percent.labels(instance=HOST, slurm_job=jobid).set(cpu_usage)
 
 
@@ -359,7 +363,7 @@ def retrieve_file_data(job, jobid, user, dirname):
                     line.rstrip().split()[1]
                 )  # Could change for a for i in range() and remove the append...
 
-    # Expose data sets to Prometheus
+    # Put data in collectors
     ut.labels(instance=HOST, slurm_job=jobid).set(times[0])
     st.labels(instance=HOST, slurm_job=jobid).set(times[1])
     sp.labels(instance=HOST, slurm_job=jobid).set(len(tasks))
@@ -422,12 +426,13 @@ def retrieve_and_expose(timer):
 
         if not empty:
             # Send data to the pushgateway
-            push_to_gateway("localhost:9091", job="jobs_exporter", registry=REGISTRY)
+            push_to_gateway("localhost:9091",
+                            job="jobs_exporter", registry=REGISTRY)
 
         # Wait the set amount of time before re-retrieving and exposing the next set of data.
         time.sleep(timer)
 
-        # Delete from Pushgateway, else it creates flat lines for jobs that don't exist anymore.
+        # Delete from Pushgateway, else it creates flat lines for jobs that don't exist anymore. iter_empty counts number of sequential iteration which have pushed no job. If no job is pushed 2 iterations in a row, jobs_exporter stops deleting from the pushgateway since there is nothing new to delete anyway. This prevents flat lines from appearing for jobs that do no exist anymore.
         if iter_empty <= 1:
             delete_from_gateway("localhost:9091", job="jobs_exporter")
 
@@ -461,7 +466,8 @@ if __name__ == "__main__":
     # Retrieve and expose data to Prometheus
     if args.timer:
         print(
-            "[+] Started the exporter with an interval of " + str(args.timer) + "s [+]"
+            "[+] Started the exporter with an interval of " +
+            str(args.timer) + "s [+]"
         )
         try:
             retrieve_and_expose(args.timer)
