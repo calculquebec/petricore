@@ -432,7 +432,7 @@ def retrieve_and_expose(timer):
         # Wait the set amount of time before re-retrieving and exposing the next set of data.
         time.sleep(timer)
 
-        # Delete from Pushgateway, else it creates flat lines for jobs that don't exist anymore. iter_empty counts number of sequential iteration which have pushed no job. If no job is pushed 2 iterations in a row, jobs_exporter stops deleting from the pushgateway since there is nothing new to delete anyway. This prevents flat lines from appearing for jobs that do no exist anymore.
+        # Delete from Pushgateway, else it creates flat lines for jobs that don't exist anymore.
         if iter_empty <= 1:
             delete_from_gateway("localhost:9091", job="jobs_exporter")
 
