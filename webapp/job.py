@@ -12,7 +12,8 @@ import external_access
 CWD = "/var/www/logic_webapp/"
 PROM_HOST = "http://mgmt1.int." + external_access.get_domain_name() + ":9090"
 API_URL = PROM_HOST + "/api/v1/query"
-LOCALHOST = gethostname().split(".")[0]  # charlie, sigma, ... [name].calculquebec.cloud
+# charlie, sigma, ... [name].calculquebec.cloud
+LOCALHOST = gethostname().split(".")[0]
 # LOCALHOST = LOCALHOST.split(".")[0]
 SACCT = "/opt/software/slurm/bin/sacct"
 FORMAT = "--format=Account,User,Start,End,AllocCPUs,AllocTres,NodeList,Elapsed"
@@ -43,7 +44,6 @@ class Job:
         self.__runtime = 0
         self.__alloc_mem = 0
         self.__billing = 0
-        self.__results = []
         self.__threads = {}
         self.__warning = False
         self.__out_string = ""
@@ -64,7 +64,6 @@ class Job:
         self.get_sacct_data()
         self.pull_prometheus()
         self.get_num_used_cpus(80)
-        # self.__user = User(username)
 
     def get_num_used_cpus(self, treshold):
         """
@@ -74,7 +73,7 @@ class Job:
         ----------
         treshold : number
             lowest acceptable percentage of cpu time used in percentage
-        
+
         """
         # Time shares
         max_time_per_core = self.__cpu_time_total / self.__alloc_cpu
@@ -90,7 +89,8 @@ class Job:
 
         """
         out = subprocess.check_output(
-            [SACCT, "--units=M", "-X", "-n", "-p", FORMAT, "-j", str(self.__jobid)]
+            [SACCT, "--units=M", "-X", "-n", "-p",
+                FORMAT, "-j", str(self.__jobid)]
         )
 
         out = out.decode("ascii")
@@ -133,9 +133,10 @@ class Job:
         metrics = ("jobs_cpu_percent", "jobs_rss", "jobs_opened_files")
         modifiers = [("avg", "max"), ("max",), ("avg",)]
         # Request the METRICS array since they all have the same form (sum max and avg) over the length of the job and are series OVER TIME
+        tmp_list = []
+
         for i in range(len(metrics)):
             for modifier in modifiers[i]:
-                tmp_list = []
                 query_string = (
                     modifier
                     + "_over_time("
@@ -149,18 +150,14 @@ class Job:
 
                 params = {"query": query_string, "time": self.__end_time}
                 response = requests.get(API_URL, params=params)
-                # print(API_URL)
-                # print(params)
                 json = response.json()["data"]["result"]
-                # print(json)
                 for item in json:
                     tmp_list.append(float(item["value"][1]))
-                self.__results.append(tmp_list)
 
-        self.__avg_cpu_usage = self.__results[0]
-        self.__max_cpu_usage = self.__results[1]
-        self.__max_rss = self.__results[2]
-        self.__opened_files = int(sum(self.__results[3]))
+        self.__avg_cpu_usage = tmp_list[0]
+        self.__max_cpu_usage = tmp_list[1]
+        self.__max_rss = tmp_list[2]
+        self.__opened_files = int(sum(tmp_list[3]))
 
         # I/O Data
         params = {
@@ -212,12 +209,11 @@ class Job:
         json = response.json()["data"]["result"]
 
         # Iterate through each process and collect their threads
-        # Use a dict because the structure is more suitable
-        # than a list (self.__results[])
+        # Use a dict because the structure is more suitable than a list
         for item in json:
             self.__threads[item["metric"]["proc_name"]] = int(
                 item["value"][1]
-            )  # Multiple nodes coud be a PROBLEM, overwriting existing data ?
+            )
 
         # CPU Times
         params = {
@@ -227,7 +223,6 @@ class Job:
 
         response = requests.get(API_URL, params=params)
         json = response.json()["data"]["result"]
-        # print(json)
 
         for item in json:
             self.__cpu_time_core[
@@ -266,7 +261,8 @@ class Job:
 
         # To add the URL to the pdf right before the last line (which is WARNING=boolean)
         PDF_URL = (
-            "petricore." + LOCALHOST + ".calculquebec.cloud/pdf/" + str(self.__jobid)
+            "petricore." + LOCALHOST +
+            ".calculquebec.cloud/pdf/" + str(self.__jobid)
         )
 
         self.__out_string = self.__out_string + "----------I/O Data----------\n"
@@ -407,12 +403,15 @@ class Job:
         self.__out_string = self.__out_string + "Sponsor: " + self.__sponsor + "\n"
         self.__out_string = self.__out_string + "User: " + self.__username + "\n"
         self.__out_string = (
-            self.__out_string + "Allocated CPUS: " + str(self.__alloc_cpu) + "\n"
+            self.__out_string + "Allocated CPUS: " +
+            str(self.__alloc_cpu) + "\n"
         )
         self.__out_string = (
-            self.__out_string + "Allocated TRES: " + str(self.__alloc_tres) + "\n"
+            self.__out_string + "Allocated TRES: " +
+            str(self.__alloc_tres) + "\n"
         )
-        self.__out_string = self.__out_string + "Node(s): " + self.__nodes + "\n"
+        self.__out_string = self.__out_string + \
+            "Node(s): " + self.__nodes + "\n"
         self.__out_string = self.__out_string + "Elapsed Time: " + self.__runtime + "\n"
 
         self.verify_data()
@@ -420,7 +419,7 @@ class Job:
     def make_plot(self, metric, filename, dirname, forpdf=False):
         """
         Makes a plot with a given metric
-        
+
         Parameters
         ----------
         metric: string
@@ -599,9 +598,11 @@ class Job:
         fname = CWD + "pdf/" + str(jobid) + "_summary"
         doc = Document(fname, geometry_options=geometry_options)
 
-        metrics = ("jobs_cpu_percent", "jobs_rss", "jobs_read_mb", "jobs_write_mb")
+        metrics = ("jobs_cpu_percent", "jobs_rss",
+                   "jobs_read_mb", "jobs_write_mb")
 
-        doc.preamble.append(Command("title", "Plots for job " + str(self.__jobid)))
+        doc.preamble.append(
+            Command("title", "Plots for job " + str(self.__jobid)))
         doc.preamble.append(Command("date", NoEscape(r"\today")))
         doc.append(NoEscape(r"\maketitle"))
 
@@ -655,7 +656,7 @@ class Job:
     def expose_json(self):
         """
         Expose data in a json format in order to make a SOURCE OF TRUTH (API)
-        
+
         Returns
         -------
         JSON-like dictionnary
@@ -677,8 +678,10 @@ class Job:
 
         data["threads"] = self.__threads
         data["cpu"] = {}
-        data["cpu"]["available"] = {"amount": self.__alloc_cpu, "unit": "cores"}
-        data["cpu"]["used"] = {"amount": self.__count_used_cpus, "unit": "cores"}
+        data["cpu"]["available"] = {
+            "amount": self.__alloc_cpu, "unit": "cores"}
+        data["cpu"]["used"] = {
+            "amount": self.__count_used_cpus, "unit": "cores"}
         data["cpu"]["time_core"] = []
 
         for core in self.__cpu_time_core.keys():
@@ -692,7 +695,8 @@ class Job:
 
             data["cpu"]["time_core"].append(tmp_dict)
 
-        data["cpu"]["time_total"] = {"time": self.__cpu_time_total, "unit": "s"}
+        data["cpu"]["time_total"] = {
+            "time": self.__cpu_time_total, "unit": "s"}
 
         data["cpu"]["avg_usage_job"] = {
             "usage": sum(self.__avg_cpu_usage),
@@ -700,7 +704,8 @@ class Job:
             "unit": "%",
         }
 
-        data["cpu"]["max_usage_job"] = {"usage": sum(self.__max_cpu_usage), "unit": "%"}
+        data["cpu"]["max_usage_job"] = {
+            "usage": sum(self.__max_cpu_usage), "unit": "%"}
 
         data["ram"] = {}
         data["ram"]["used"] = {

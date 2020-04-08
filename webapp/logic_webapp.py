@@ -41,7 +41,6 @@ def job_info(jobid):
         job.fill_out_string()
     except Exception as e:
         return {"error": e}, 404
-    job.expose_json()
     return job.get_out_string()
 
 
