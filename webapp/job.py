@@ -38,6 +38,7 @@ class Job:
         self.__start_time = 0
         self.__end_time = 0
         self.__alloc_cpu = 0
+        self.__alloc_gpu = {}
         self.__alloc_tres = 0
         self.__nodes = 0
         self.__step = 0
@@ -118,12 +119,17 @@ class Job:
         self.__nodes = out[6]
         self.__runtime = out[7]
         self.__step = self.__end_time - self.__start_time
+        for tres in self.__alloc_tres.split(','):
+            if 'billing' in tres:
+                self.__billing = int(tres.split("=")[1])
+            elif 'mem' in tres:
+                self.__alloc_mem = tres.split("=")[1]
 
-        self.__billing = self.__alloc_tres.split(",")[0]
-        self.__billing = int(self.__billing.split("=")[1])
-
-        self.__alloc_mem = self.__alloc_tres.split(",")[2]
-        self.__alloc_mem = self.__alloc_mem.split("=")[1]
+    def transform_float_to_list(self, value):
+        if isinstance(value, float):
+            return [value]
+        else:
+            return value
 
     def pull_prometheus(self):
         """
@@ -157,8 +163,8 @@ class Job:
         self.__avg_cpu_usage = tmp_list[0]
         self.__max_cpu_usage = tmp_list[1]
         self.__max_rss = tmp_list[2]
-        self.__opened_files = int(sum(tmp_list[3]))
-
+        self.__opened_files = int(
+            sum(self.transform_float_to_list(tmp_list[3])))
         # I/O Data
         params = {
             "query": 'jobs_uses_scratch{slurm_job="' + str(self.__jobid) + '"}',
@@ -240,17 +246,35 @@ class Job:
         for item in response.json()["data"]["result"]:
             self.__cpu_time_total += float(item["value"][1])
 
+        # GPU
+        params = {
+            "query": 'jobs_gpus_used{slurm_job="' + str(self.__jobid) + '"}',
+            "time": self.__end_time,
+        }
+
+        response = requests.get(API_URL, params=params)
+        for metric in response.json()["data"]["result"]:
+            # Create set before adding to it. Specific case where the key hasn't yet been inserted into the dictionnary.
+            if metric["metric"]["instance"] not in self.__alloc_gpu.keys():
+                self.__alloc_gpu[metric["metric"]["instance"]] = set()
+
+            self.__alloc_gpu[metric["metric"]["instance"]].update(
+                metric["metric"]["gpuid"])
+
     def verify_data(self):
         """
         Verifies if CPU Util, core usage, jobs_rss, threads, I/O are withing CC's acceptable usage boundaries
         """
         # Declarations
-        usage_avg_per_cpu = sum(self.__avg_cpu_usage) / self.__alloc_cpu
+        usage_avg_per_cpu = sum(self.transform_float_to_list(
+            self.__avg_cpu_usage)) / self.__alloc_cpu
         usage_max_per_cpu = (
-            sum(self.__max_cpu_usage) / self.__alloc_cpu
+            sum(self.transform_float_to_list(
+                self.__max_cpu_usage)) / self.__alloc_cpu
         )  # Assuming balanced workload
         usage_ratio = usage_avg_per_cpu / usage_max_per_cpu
-        usage_rss = (sum(self.__max_rss) / int(self.__alloc_mem[:-1])) * 100
+        usage_rss = (sum(self.transform_float_to_list(
+            self.__max_rss)) / int(self.__alloc_mem[:-1])) * 100
         expected_time_usage_core = 0.9 * (
             self.__cpu_time_total / len(self.__cpu_time_core.keys())
         )  # To check for good parallelization (assumes we want to stay withing 10% of perfect load balancing) (Lower threshold)
@@ -539,14 +563,11 @@ class Job:
                 "time": self.__end_time,
             }
             response = requests.get(URL, params=params)
-            # print(URL)
-            # print(params)
             json = response.json()["data"]["result"]
             for item in json:
                 # Insures we have core numbers only if we're looking for cpu_time_core
                 if "core" in item["metric"]:
                     core = item["metric"]["core"]
-                    # print(core)
                 else:
                     core = False
 
@@ -699,26 +720,26 @@ class Job:
             "time": self.__cpu_time_total, "unit": "s"}
 
         data["cpu"]["avg_usage_job"] = {
-            "usage": sum(self.__avg_cpu_usage),
+            "usage": sum(self.transform_float_to_list(self.__avg_cpu_usage)),
             "lowest_expected_usage": 80 * self.__alloc_cpu,
             "unit": "%",
         }
 
         data["cpu"]["max_usage_job"] = {
-            "usage": sum(self.__max_cpu_usage), "unit": "%"}
+            "usage": sum(self.transform_float_to_list(self.__max_cpu_usage)), "unit": "%"}
 
         data["ram"] = {}
         data["ram"]["used"] = {
-            "amount": sum(self.__max_rss),
+            "amount": sum(self.transform_float_to_list(self.__max_rss)),
             "unit": "MB",
-            "usage": sum(self.__max_rss) / int(self.__alloc_mem[:-1]),
+            "usage": sum(self.transform_float_to_list(self.__max_rss)) / int(self.__alloc_mem[:-1]),
         }
 
         data["ram"]["available"] = {
             "amount": float(self.__alloc_mem[:-1]),
             "unit": "MB",
         }
-
+        data["gpu"] = list(self.__alloc_gpu)
         data["io"] = {}
         data["io"]["opened_files"] = self.__opened_files
 

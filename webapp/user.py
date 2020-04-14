@@ -38,7 +38,8 @@ class User:
         self.SLURM_DB_CONNECTION = external_access.create_slurm_db_connection(
             SLURM_DB_HOST, SLURM_DB_PORT, SLURM_DB_USER, SLURM_DB_PASS, SLURM_ACCT_DB
         )
-        self.LDAP_CONNECTION = external_access.create_ldap_connection(LDAP_HOST)
+        self.LDAP_CONNECTION = external_access.create_ldap_connection(
+            LDAP_HOST)
 
         self.__jobs = self.retrieve_job_map()
         self.__projects_dict = self.retrieve_user_projects()
@@ -81,7 +82,8 @@ class User:
 
         # Find groups where `username` is a member (search returns list of dictionnaries)
         groups = self.LDAP_CONNECTION.search_s(
-            dc_string, ldap.SCOPE_SUBTREE, "memberUid=" + self.__username, ["cn"],
+            dc_string, ldap.SCOPE_SUBTREE, "memberUid=" +
+            self.__username, ["cn"],
         )[0][1]["cn"]
 
         groups = [g.decode("ascii") for g in groups]
@@ -96,24 +98,26 @@ class User:
     def get_projects_usage(self, paths):
         """
         Retrieves the file and storage usage of /projects
-        
+
         Parameters
         ----------
         paths : array
             list of user's projects paths
-            
+
         Returns
         -------
         Tuple
-            (usage_dict, file_count)
+            (usage_dict, file_count, percentage)
             usage_dict : Dictionnary of all projects' disk usage in Bytes
-            file_count : Total file count of all projects"""
+            file_count : Total file count of all projects
+            percentage : effectively a percentage of the used files"""
         usage_dict = {}
         file_count = 0
         for project, path in paths.items():
             total_size = 0
             for dp, dn, fn in os.walk(path):
-                file_count += len(fn) + 1  # +1 for directory which counts as a file
+                # +1 for directory which counts as a file
+                file_count += len(fn) + 1
                 for f in fn:
                     fp = os.path.join(dp, f)
                     if not os.path.islink(fp):
@@ -125,12 +129,12 @@ class User:
     def get_file_usage(self, filesystem):
         """
         Retrieves the file usage of a given filesystem
-        
+
         Parameters
         ----------
         filesystem : string
             filesystem to scrape
-            
+
         Returns
         -------
         Tuple
@@ -154,7 +158,8 @@ class User:
                     or path + "/nearline" in dp
                 ):
                     continue
-            file_count += len(filenames) + 1  # + 1 for directory which counts as a file
+            # + 1 for directory which counts as a file
+            file_count += len(filenames) + 1
         percent = file_count / FILE_LIMITS[filesystem]
         return file_count, percent
 
@@ -196,4 +201,3 @@ class User:
         output["project_usages"] = self.__usage_dict
         output["file_usages"] = self.__files
         return output
-
