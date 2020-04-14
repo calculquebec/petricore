@@ -118,6 +118,12 @@ cpu_percent_per_core = Gauge(
     ["instance", "slurm_job"],
     registry=REGISTRY,
 )
+gpus_gauge = Gauge(
+    "jobs_gpus_used",
+    "Boolean values representing if the IDs of the gpus are used in the job",
+    ["instance", "slurm_job", "gpuid"],
+    registry=REGISTRY,
+)
 
 # Mappings for jobs
 job_cpus_map = {}
@@ -225,12 +231,16 @@ def get_proc_data(pids, numcpus, jobid):
     cpu_usage = 0
     cpu_usage_per_core = 0  # On average
     proc_names = []
+    gpus = set()
 
     for pid in pids:
         p = psutil.Process(pid)
         name = p.name()
         proc_names.append(name)
+        env = p.environ()
 
+        if "SLURM_JOB_GPUS" in env.keys():
+            gpus.update(env["SLURM_JOB_GPUS"])
         # Request cpu percent out of the "oneshot" below so it's queried properly
         cpu_usage += p.cpu_percent(interval=0.1)
 
@@ -281,6 +291,9 @@ def get_proc_data(pids, numcpus, jobid):
     cpu_percent_per_core.labels(
         instance=HOST, slurm_job=jobid).set(cpu_usage_per_core)
     cpu_percent.labels(instance=HOST, slurm_job=jobid).set(cpu_usage)
+
+    for gpu in gpus:
+        gpus_gauge.labels(instance=HOST, slurm_job=jobid, gpuid=gpu).set(1)
 
 
 def retrieve_file_data(job, jobid, user, dirname):
