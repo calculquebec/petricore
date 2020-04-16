@@ -1,0 +1,14 @@
+[Unit]
+Description=nvidia-smi exporterfor Prometheus
+After=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=./opt/nvidia_smi_exporter/bin/nvidia_smi_exporter
+Restart=always
+RestartSec=3
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target
