@@ -36,8 +36,10 @@ def index():
 
 @app.route("/mail/<jobid>")
 def job_info(jobid):
-    job = Job(jobid)
+
     try:
+        assert type(jobid) == int
+        job = Job(jobid)
         job.fill_out_string()
     except Exception as e:
         return {"error": e}, 404
@@ -46,6 +48,7 @@ def job_info(jobid):
 
 @app.route("/plot/<jobid>/<metric>")
 def job_plot(jobid, metric):
+    assert type(jobid) == int
     job = Job(jobid)
     filename = metric + ".png"
     dirname = CWD + "plots/" + str(jobid) + "/"
@@ -64,7 +67,12 @@ def job_plot(jobid, metric):
 
 @app.route("/pie/<jobid>/")
 def job_pie(jobid):
-    job = Job(jobid)
+    try:
+        assert type(jobid) == int
+        job = Job(jobid)
+    except Exception as e:
+        return {"error": e}, 404
+
     metrics = ("jobs_system_time", "jobs_user_time")
     filename = str(jobid)
     dirname = CWD + "pies/" + str(jobid) + "/"
@@ -87,7 +95,12 @@ def job_pie(jobid):
 
 @app.route("/pdf/<jobid>")
 def job_pdf(jobid):
-    job = Job(jobid)
+    try:
+        assert type(jobid) == int
+        job = Job(jobid)
+    except Exception as e:
+        return {"error": e}, 404
+
     filename = str(jobid) + "_summary.pdf"
     dirname = CWD + "pdf/"
     if not os.path.isfile(dirname + filename):
@@ -105,6 +118,7 @@ def job_pdf(jobid):
 @app.route("/api/v1/jobs/<jobid>/usage")
 def job_truth(jobid):
     try:
+        assert type(jobid) == int
         job = Job(jobid)
         retval = job.expose_json()
     except IndexError:
