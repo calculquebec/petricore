@@ -17,7 +17,7 @@ LOCALHOST = gethostname().split(".")[0]
 # LOCALHOST = LOCALHOST.split(".")[0]
 SACCT = "/opt/software/slurm/bin/sacct"
 FORMAT = "--format=Account,User,Start,End,AllocCPUs,AllocTres,NodeList,Elapsed"
-
+STEP_SIZE = '15s'
 Y_LABELS = {
     "jobs_rss": "Resident set size (MB)",
     "jobs_cpu_percent": "CPU Usage (%)",
@@ -136,6 +136,7 @@ class Job:
         Pull data from Prometheus HTTP API with a hardcoded list of metrics and fills the associated object attributes
         """
 
+        # OS Data
         metrics = ("jobs_cpu_percent", "jobs_rss", "jobs_opened_files")
         modifiers = [("avg", "max"), ("max",), ("avg",)]
         # Request the METRICS array since they all have the same form (sum max and avg) over the length of the job and are series OVER TIME
@@ -165,6 +166,7 @@ class Job:
         self.__max_rss = tmp_list[2]
         self.__opened_files = int(
             sum(self.transform_float_to_list(tmp_list[3])))
+
         # I/O Data
         params = {
             "query": 'jobs_uses_scratch{slurm_job="' + str(self.__jobid) + '"}',
@@ -260,6 +262,39 @@ class Job:
 
             self.__alloc_gpu[metric["metric"]["instance"]].update(
                 metric["metric"]["gpuid"])
+
+        metrics = ['utilization_gpu', 'utilization_memory',
+                   'temperature_gpu', 'memory_total', 'memory_free', 'memory_used']
+        modifiers = ['max', 'avg', 'min']
+
+        # for metric in metrics:
+        #     for modifier in modifiers:
+        #         for instance in self.__alloc_gpu.keys():
+        #             for gpu in self.__alloc_gpu[instance]:
+
+        #                 query_string = (
+        #                     modifier
+        #                     + "_over_time("
+        #                     + metric
+        #                     + '{slurm_job="'
+        #                     + str(self.__jobid)
+        #                     + '"}['
+        #                     + str(self.__step)
+        #                     + "s])"
+        #                 )
+
+        #     params = {"query": query_string, "time": self.__end_time}
+        #     response = requests.get(API_URL, params=params)
+        #     json = response.json()["data"]["result"]
+        #     for item in json:
+        #         tmp_list.append(float(item["value"][1]))
+
+        params = {
+            "query": metric + '{slurm_job="' + str(self.__jobid) + '"}',
+            "start": self.__start_time,
+            "end": self.__end_time,
+            "step": STEP_SIZE
+        }
 
     def verify_data(self):
         """
@@ -457,7 +492,6 @@ class Job:
         """
         # Constants
         plt.figure()
-        step_size = "15s"
         URL = PROM_HOST + "/api/v1/query_range"
 
         if not os.path.exists(dirname):
@@ -467,7 +501,7 @@ class Job:
             "query": metric + '{slurm_job="' + str(self.__jobid) + '"}',
             "start": self.__start_time,
             "end": self.__end_time,
-            "step": step_size,
+            "step": STEP_SIZE,
         }
 
         response = requests.get(URL, params=params)
@@ -739,7 +773,8 @@ class Job:
             "amount": float(self.__alloc_mem[:-1]),
             "unit": "MB",
         }
-        data["gpu"] = list(self.__alloc_gpu)
+        self.__alloc_gpu = {k: list(v) for k, v in self.__alloc_gpu.items()}
+        data["gpu"] = self.__alloc_gpu
         data["io"] = {}
         data["io"]["opened_files"] = self.__opened_files
 

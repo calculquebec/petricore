@@ -38,7 +38,6 @@ def index():
 def job_info(jobid):
 
     try:
-        assert type(jobid) == int
         job = Job(jobid)
         job.fill_out_string()
     except Exception as e:
@@ -48,7 +47,6 @@ def job_info(jobid):
 
 @app.route("/plot/<jobid>/<metric>")
 def job_plot(jobid, metric):
-    assert type(jobid) == int
     job = Job(jobid)
     filename = metric + ".png"
     dirname = CWD + "plots/" + str(jobid) + "/"
@@ -68,7 +66,6 @@ def job_plot(jobid, metric):
 @app.route("/pie/<jobid>/")
 def job_pie(jobid):
     try:
-        assert type(jobid) == int
         job = Job(jobid)
     except Exception as e:
         return {"error": e}, 404
@@ -96,7 +93,6 @@ def job_pie(jobid):
 @app.route("/pdf/<jobid>")
 def job_pdf(jobid):
     try:
-        assert type(jobid) == int
         job = Job(jobid)
     except Exception as e:
         return {"error": e}, 404
@@ -118,7 +114,6 @@ def job_pdf(jobid):
 @app.route("/api/v1/jobs/<jobid>/usage")
 def job_truth(jobid):
     try:
-        assert type(jobid) == int
         job = Job(jobid)
         retval = job.expose_json()
     except IndexError:
