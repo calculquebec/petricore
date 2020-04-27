@@ -60,7 +60,7 @@ class Job:
         self.__avg_cpu_usage = 0
         self.__max_rss = 0
         self.__count_used_cpus = 0
-
+        self.__gpu_data = []
         # Retrieve actual data
         self.get_sacct_data()
         self.pull_prometheus()
@@ -154,10 +154,12 @@ class Job:
                     + str(self.__step)
                     + "s])"
                 )
-
+                print(query_string, flush=True)
+                print(self.__end_time, flush=True)
                 params = {"query": query_string, "time": self.__end_time}
                 response = requests.get(API_URL, params=params)
                 json = response.json()["data"]["result"]
+                print(json, flush=True)
                 for item in json:
                     tmp_list.append(float(item["value"][1]))
 
@@ -267,34 +269,42 @@ class Job:
                    'temperature_gpu', 'memory_total', 'memory_free', 'memory_used']
         modifiers = ['max', 'avg', 'min']
 
-        # for metric in metrics:
-        #     for modifier in modifiers:
-        #         for instance in self.__alloc_gpu.keys():
-        #             for gpu in self.__alloc_gpu[instance]:
+        tmp_list = {}
 
-        #                 query_string = (
-        #                     modifier
-        #                     + "_over_time("
-        #                     + metric
-        #                     + '{slurm_job="'
-        #                     + str(self.__jobid)
-        #                     + '"}['
-        #                     + str(self.__step)
-        #                     + "s])"
-        #                 )
+        for metric in metrics:
+            for modifier in modifiers:
+                for instance in self.__alloc_gpu.keys():
+                    for gpu in self.__alloc_gpu[instance]:
 
-        #     params = {"query": query_string, "time": self.__end_time}
-        #     response = requests.get(API_URL, params=params)
-        #     json = response.json()["data"]["result"]
-        #     for item in json:
-        #         tmp_list.append(float(item["value"][1]))
+                        query_string = (
+                            modifier
+                            + "_over_time("
+                            + metric
+                            + '{gpu="'
+                            + gpu
+                            + ',instance="'
+                            + instance
+                            + '"}[' + self.__step
+                            + '])'
+                        )
 
-        params = {
-            "query": metric + '{slurm_job="' + str(self.__jobid) + '"}',
-            "start": self.__start_time,
-            "end": self.__end_time,
-            "step": STEP_SIZE
-        }
+                        params = {"query": query_string,
+                                  "start": self.__start_time,
+                                  "end": self.__end_time,
+                                  #   "step": self.__step,
+                                  }
+
+                        print(self.__start_time, flush=True)
+                        print(self.__end_time, flush=True)
+                        response = requests.get(API_URL, params=params)
+                        json = response.json()["data"]["result"]
+                        print(json)
+        # params = {
+        #     "query": metric + '{slurm_job="' + str(self.__jobid) + '"}',
+        #     "start": self.__start_time,
+        #     "end": self.__end_time,
+        #     "step": STEP_SIZE
+        # }
 
     def verify_data(self):
         """

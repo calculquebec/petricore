@@ -21,6 +21,7 @@ from prometheus_client import (
 import signal
 import sys
 import psutil
+import subprocess
 
 # Global Constants
 HOST = socket.gethostname().split(".")[0]  # Get node name
@@ -246,6 +247,10 @@ def get_proc_data(pids, numcpus, jobid):
 
         cpu_usage_per_core += cpu_usage / numcpus
 
+        # output = subprocess.check_output('lsof -p ' + pid).split('\n')
+        # filenames = [line.split()[8] for line in output]
+        # opened_files.update(filenames)
+
         with p.oneshot():
             # Get data from the process with psutil
             read_cnt += p.io_counters()[0]
@@ -253,7 +258,6 @@ def get_proc_data(pids, numcpus, jobid):
             read_mbytes += p.io_counters()[2] / 1048576  # In MB
             write_mbytes += p.io_counters()[3] / 1048576  # In MB
             res_set_size += p.memory_info()[0] / 1048576  # In MB
-            opened_files.update(p.open_files())
             threads = p.num_threads()
 
             tc.labels(instance=HOST, slurm_job=jobid,
@@ -303,13 +307,13 @@ def retrieve_file_data(job, jobid, user, dirname):
 
     Parameters
     ----------
-    job: string 
+    job: string
         job name to find cgroup
-    jobid: integer 
+    jobid: integer
         jobid for collector labels
-    user: string 
+    user: string
         username to find the right cgroup
-    dirname: string 
+    dirname: string
         full name of the path to find tasks
 
     """
