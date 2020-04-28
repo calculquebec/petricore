@@ -8,7 +8,9 @@ import os
 import fnmatch
 import re
 import time
+import errno
 import socket
+import stat
 import argparse
 import collections
 from prometheus_client import (
@@ -30,7 +32,7 @@ BLACKLIST = []
 CPUACCT_DIR = "/sys/fs/cgroup/cpuacct/slurm/"
 CPUSET_DIR = "/sys/fs/cgroup/cpuset/slurm/"
 REGEX = "task_*"
-
+PROCFS_PATH = '/proc'
 
 sp = Gauge(
     "jobs_spawned_processes",
@@ -158,6 +160,37 @@ def load_blacklist(filename):
         BLACKLIST = blacklist.read().split("\n")
 
 
+def isfile_nfs(path):
+    """Checks if the path is in another filesystem, if so, consider it an opened file descriptor. This function serves to fix the issue
+    where accessing a file through NFS gave `permission denied` because of squash_root."""
+    if path.startswith('/home') or path.startswith('/project') or path.startswith('/scratch') or path.startswith('/nearline'):
+        return True
+    return False
+
+
+def open_files(files, pid):
+    """ Modified version of psutil's open_files to work with squash_root on NFS partition. Basically removes the file opening directly and just reading link"""
+    retlist = []
+    for fd in files:
+        file = "%s/%s/fd/%s" % (PROCFS_PATH, pid, fd)
+        try:
+            path = os.readlink(file)
+        except (FileNotFoundError, ProcessLookupError):
+            # ENOENT == file which is gone in the meantime
+            continue
+        except OSError as err:
+            if err.errno == errno.EINVAL:
+                # not a link
+                continue
+            raise
+        else:
+            # If file is a regular file, it has an absolute file name - taken from psutil, just removed the with open() part so we dont throw an error on NFS mounted partitions
+            if path.startswith('/') and (os.path.isfile(path) or isfile_nfs(path)):
+                # Get file position and flags.
+                retlist.append(path)
+    return retlist
+
+
 def remove_old_procs(cur_map, last_map, jobid):
     """Remove a PROCESS (not job) which was there in the last iteration but isn't appearing in the newest iteration of the scraping
 
@@ -247,9 +280,9 @@ def get_proc_data(pids, numcpus, jobid):
 
         cpu_usage_per_core += cpu_usage / numcpus
 
-        # output = subprocess.check_output('lsof -p ' + pid).split('\n')
-        # filenames = [line.split()[8] for line in output]
-        # opened_files.update(filenames)
+        files = os.listdir("%s/%s/fd" % (PROCFS_PATH, pid))
+        files = open_files(files, pid)
+        opened_files.update(files)
 
         with p.oneshot():
             # Get data from the process with psutil
@@ -286,7 +319,7 @@ def get_proc_data(pids, numcpus, jobid):
     job_proc_name_map_last[jobid] = proc_names
 
     # Put data in collectors
-    # of.labels(instance=HOST, slurm_job=jobid).set(len(set(opened_files)))
+    of.labels(instance=HOST, slurm_job=jobid).set(len(set(opened_files)))
     read.labels(instance=HOST, slurm_job=jobid).set(read_mbytes)
     write.labels(instance=HOST, slurm_job=jobid).set(write_mbytes)
     read_count.labels(instance=HOST, slurm_job=jobid).set(read_cnt)
