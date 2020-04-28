@@ -286,7 +286,7 @@ def get_proc_data(pids, numcpus, jobid):
     job_proc_name_map_last[jobid] = proc_names
 
     # Put data in collectors
-    of.labels(instance=HOST, slurm_job=jobid).set(len(set(opened_files)))
+    # of.labels(instance=HOST, slurm_job=jobid).set(len(set(opened_files)))
     read.labels(instance=HOST, slurm_job=jobid).set(read_mbytes)
     write.labels(instance=HOST, slurm_job=jobid).set(write_mbytes)
     read_count.labels(instance=HOST, slurm_job=jobid).set(read_cnt)
