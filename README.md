@@ -18,6 +18,7 @@ A Slurm jobs metrics (using cgroups and /proc via cross-reference) data exporter
 - Amount of megabytes written (jobs_write_mb)
 - Write count (jobs_write_count)
 - Read count (jobs_read_count)
+- GPUs used (jobs_gpus_used)
 
 Every class of exported data starts with the prefix `jobs_` to be easily recognizable as part of this exporter.
 
@@ -89,6 +90,7 @@ All you have to do in order for this daemon to work as expected is to have a Pro
 - CPU usage per core on average
 - CPU usage total for the job (May be over 100% if multiple CPUs are used)
 - Job uses the Scratch filesystem
+- GPUs used (via environ)
 
 As a reminder, even though the gathering of the data is split in two different areas, cgroups are still required since they contain a mapping for a job and its process IDs.
 
