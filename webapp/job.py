@@ -60,7 +60,7 @@ class Job:
         self.__avg_cpu_usage = 0
         self.__max_rss = 0
         self.__count_used_cpus = 0
-        self.__gpu_data = []
+        self.__gpu_data = {}
         # Retrieve actual data
         self.get_sacct_data()
         self.pull_prometheus()
@@ -269,10 +269,9 @@ class Job:
                    'temperature_gpu', 'memory_total', 'memory_free', 'memory_used']
         modifiers = ['max', 'avg', 'min']
 
-        tmp_list = {}
-
         for metric in metrics:
             for modifier in modifiers:
+                tmp_list = []
                 for instance in self.__alloc_gpu.keys():
                     for gpu in self.__alloc_gpu[instance]:
 
@@ -282,23 +281,24 @@ class Job:
                             + metric
                             + '{gpu="'
                             + gpu
-                            + ',instance="'
+                            + '",instance="'
                             + instance
-                            + '"}[' + self.__step
-                            + '])'
+                            + '"}[' + str(self.__step)
+                            + 's])'
                         )
 
                         params = {"query": query_string,
                                   "start": self.__start_time,
                                   "end": self.__end_time,
-                                  #   "step": self.__step,
                                   }
 
-                        print(self.__start_time, flush=True)
-                        print(self.__end_time, flush=True)
                         response = requests.get(API_URL, params=params)
+                        print(params, flush=True)
                         json = response.json()["data"]["result"]
-                        print(json)
+                        print(json, flush=True)
+                        for item in json:
+                            tmp_list.append(float(item["value"][1]))
+                        self.__gpu_data[modifier + "_" + metric] = tmp_list
         # params = {
         #     "query": metric + '{slurm_job="' + str(self.__jobid) + '"}',
         #     "start": self.__start_time,
@@ -784,7 +784,9 @@ class Job:
             "unit": "MB",
         }
         self.__alloc_gpu = {k: list(v) for k, v in self.__alloc_gpu.items()}
-        data["gpu"] = self.__alloc_gpu
+        data["gpu"] = {}
+        data["gpu"]["alloc_gpu"] = self.__alloc_gpu
+        data["gpu"]["metrics"] = self.__gpu_data
         data["io"] = {}
         data["io"]["opened_files"] = self.__opened_files
 
