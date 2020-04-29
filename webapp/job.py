@@ -136,6 +136,8 @@ class Job:
         Pull data from Prometheus HTTP API with a hardcoded list of metrics and fills the associated object attributes
         """
 
+        QUERY_RANGE_URL = PROM_HOST + "/api/v1/query_range"
+
         # OS Data
         metrics = ("jobs_cpu_percent", "jobs_rss", "jobs_opened_files")
         modifiers = [("avg", "max"), ("max",), ("avg",)]
@@ -286,25 +288,28 @@ class Job:
                             + '"}[' + str(self.__step)
                             + 's])'
                         )
-
                         params = {"query": query_string,
                                   "start": self.__start_time,
                                   "end": self.__end_time,
                                   }
-
-                        response = requests.get(API_URL, params=params)
+                        # if metric != 'gpu_utilization':
+                        #     response = requests.get(API_URL, params=params)
+                        #     print(params, flush=True)
+                        #     json = response.json()["data"]["result"]
+                        #     print(json, flush=True)
+                        #     for item in json:
+                        #         tmp_list.append(float(item["value"][1]))
+                        # else:
+                        params["step"] = str(self.__step) + 's'
                         print(params, flush=True)
+                        response = requests.get(
+                            QUERY_RANGE_URL, params=params)
                         json = response.json()["data"]["result"]
                         print(json, flush=True)
                         for item in json:
-                            tmp_list.append(float(item["value"][1]))
+                            tmp_list.append(float(item["values"][1][1]))
+
                         self.__gpu_data[modifier + "_" + metric] = tmp_list
-        # params = {
-        #     "query": metric + '{slurm_job="' + str(self.__jobid) + '"}',
-        #     "start": self.__start_time,
-        #     "end": self.__end_time,
-        #     "step": STEP_SIZE
-        # }
 
     def verify_data(self):
         """
